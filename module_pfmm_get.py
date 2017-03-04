@@ -25,6 +25,7 @@ def relatedRecordGlobalIds(tableName, globalId):
     county_coun = os.path.join(db, tbPref+'county_coun')
     contact_events = os.path.join(db, tbPref+'contact_events')
     party_cont_own_prcl = os.path.join(db, tbPref+'party_cont_own_prcl')
+    party_cont_own_blks = os.path.join(db, tbPref+'party_cont_own_blks')
     pls_sections_extents = os.path.join(db, tbPref+'pls_sections_extents')
     party_contacts = os.path.join(db, tbPref+'party_contacts')
     # feature datasets
@@ -48,12 +49,10 @@ def relatedRecordGlobalIds(tableName, globalId):
             party_cont_own_blks,
             contact_events,
             management_plans,
-            cover_type_areas,
             project_areas
             ],
         'ownership_parcels': [
-            party_cont_own_prcl,
-            tax_program_areas
+            party_cont_own_prcl
             ]
         }
     # get list of globalids for each child table
@@ -67,6 +66,16 @@ def relatedRecordGlobalIds(tableName, globalId):
         childTableName = arcpy.Describe(childTable).baseName
         childTablesDict[childTableName] = gidList
     return childTablesDict
+
+def lastPcopPcGid(pcopGids):
+    lastDate = datetime.datetime(1900, 1, 1, 0, 0)
+    partyContactGlobalId = ''
+    for pcopGid in pcopGids:
+        pcopObj = cls_party_cont_own_prcl(pcopGid)
+        if pcopObj.purchase_date >= lastDate:
+            partyContactGlobalId = pcopObj.party_contact_guid
+            lastDate = pcopObj.purchase_date
+    return partyContactGlobalId
 
 class cls_party_contact:
     '''Party Contacts record.'''
