@@ -80,6 +80,12 @@ def getMgmtPlanAttributesJSON(maGlobalId):
             "value": pcLoObj.person_last_name
         },
         {
+            "caption": "Land Contact Partner First Name",
+            "type": "text",
+            "name": "party_contacts.spouse_name.landcontact",
+            "value": pcLoObj.spouse_name
+        },
+        {
             "caption": "Land Contact Business Name",
             "type": "text",
             "name": "party_contacts.business_name.landcontact",
@@ -146,13 +152,31 @@ def getMgmtPlanAttributesJSON(maGlobalId):
             "datepicker": {
                 "minDate": "01/01/1900"
             },
-            'value': module_pfmm_helpers.dateToMDYYYY(mpObj.plan_date)
+            "value": module_pfmm_helpers.dateToMDYYYY(mpObj.plan_date)
+        },
+        {
+            "caption": "Plan Status",
+            "type": "text",
+            "name": "management_plans.status",
+            "value": mpObj.status
+        },
+        {
+            "caption": "Grant Funding",
+            "type": "text",
+            "name": "management_plans.grant_id",
+            "value": mpObj.grant_id
         },
         {
             "caption": "Plan Acres",
             "type": "number",
             "name": "management_plans.acres_plan",
-            'value': mpObj.acres_plan
+            "value": mpObj.acres_plan
+        },
+        {
+            "caption": "Registation Number",
+            "type": "text",
+            "name": "management_plans.reg_num",
+            "value": mpObj.reg_num
         },
         {
             "caption": "Registration Date",
@@ -161,7 +185,7 @@ def getMgmtPlanAttributesJSON(maGlobalId):
             "datepicker": {
                 "minDate": "01/01/1900"
             },
-            'value': module_pfmm_helpers.dateToMDYYYY(mpObj.registered_date)
+            "value": module_pfmm_helpers.dateToMDYYYY(mpObj.registered_date)
         }
     ]
 
