@@ -478,3 +478,21 @@ class cls_party_cont_own_prcl:
                 self.current_owner = module_pfmm_helpers.passNull(srow[5], self.current_owner)
                 self.ownership_block_contct_type = module_pfmm_helpers.passNull(srow[6], self.ownership_block_contct_type)
                 self.comments = module_pfmm_helpers.passNull(srow[7], self.comments)
+
+class cls_county_coun:
+    '''PFM County Coun record.'''
+    def __init__(self, coun = ''):
+        self.recordExists = False
+        self.path = os.path.join(db, tbPref+'county_coun')
+        self.where = "coun = "+str(coun)
+        self.fieldList = [
+            'coun',
+            'cty_name'
+             ]
+        self.coun = 0
+        self.cty_name = ''
+        with arcpy.da.SearchCursor(self.path, self.fieldList, self.where) as scur:
+            for srow in scur:
+                self.recordExists = True
+                self.coun = srow[0]
+                self.cty_name = srow[1]

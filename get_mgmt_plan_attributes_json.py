@@ -38,12 +38,24 @@ def getMgmtPlanAttributesJSON(maGlobalId):
     obChildTbls = module_pfmm_get.relatedRecordGlobalIds('ownership_blocks', obObj.globalid)
     opGids = obChildTbls[tbPref+'ownership_parcels']
 
-    # Get party_cont_own_prcl
+    # Get party_cont_own_prcl, counties, and parcel PINs
     pcopGids = []
+    countyList = []
+    pinList = []
     for opGid in opGids:
         opObj = module_pfmm_get.cls_ownership_parcel(opGid)
+        # party_cont_own_prcl
         opChildTbls = module_pfmm_get.relatedRecordGlobalIds('ownership_parcels', opObj.globalid)
         pcopGids += opChildTbls[tbPref+'party_cont_own_prcl']
+        # counties
+        counObj = module_pfmm_get.cls_county_coun(opObj.coun)
+        countyList.append(counObj.cty_name)
+        # parcel PINs
+        pinList.append(opObj.pin)
+
+    # County and PIN lists to strings
+    countiesStr = ", ".join(sorted(set(countyList)))
+    pinStr = ", ".join(sorted(pinList))
 
     # Get party_contact.landcontact
     pcLoGid = module_pfmm_get.lastPcopPcGid(pcopGids)
@@ -186,6 +198,18 @@ def getMgmtPlanAttributesJSON(maGlobalId):
                 "minDate": "01/01/1900"
             },
             "value": module_pfmm_helpers.dateToMDYYYY(mpObj.registered_date)
+        },
+        {
+            "caption": "Counties",
+            "type": "text",
+            "name": "counties",
+            "value": countiesStr
+        },
+        {
+            "caption": "PINs",
+            "type": "text",
+            "name": "pins",
+            "value": pinStr
         }
     ]
 
