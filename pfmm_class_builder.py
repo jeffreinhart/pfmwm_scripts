@@ -1,7 +1,4 @@
-'''Builds class for table. A few fixes still needed:
-- delete featureDataset if table
-    - replace class name
-    - add globalIdExists or recordExists in searchCursor'''
+'''Builds class for table.'''
 
 import arcpy
 
@@ -9,7 +6,11 @@ import arcpy
 ##dataset = r'P:\FOR\FORIST\PFM\dev10_2\dnrgdrs-prod1-pg-dc-pfmm.sde\pfmm_dev.pfmm.spatial\pfmm_dev.pfmm.management_plans'
 ##dataset = r'P:\FOR\FORIST\PFM\dev10_2\dnrgdrs-prod1-pg-dc-pfmm.sde\pfmm_dev.pfmm.spatial\pfmm_dev.pfmm.ownership_blocks'
 ##dataset = r'P:\FOR\FORIST\PFM\dev10_2\dnrgdrs-prod1-pg-dc-pfmm.sde\pfmm_dev.pfmm.spatial\pfmm_dev.pfmm.ownership_parcels'
-dataset = r'P:\FOR\FORIST\PFM\dev10_2\dnrgdrs-prod1-pg-dc-pfmm.sde\pfmm_dev.pfmm.party_cont_own_prcl'
+##dataset = r'P:\FOR\FORIST\PFM\dev10_2\dnrgdrs-prod1-pg-dc-pfmm.sde\pfmm_dev.pfmm.party_cont_own_prcl'
+##dataset = r'P:\FOR\FORIST\PFM\dev10_2\dnrgdrs-prod1-pg-dc-pfmm.sde\pfmm_dev.pfmm.party_cont_own_blks'
+##dataset = r'P:\FOR\FORIST\PFM\dev10_2\dnrgdrs-prod1-pg-dc-pfmm.sde\pfmm_dev.pfmm.contact_events'
+##dataset = r'P:\FOR\FORIST\PFM\dev10_2\dnrgdrs-prod1-pg-dc-pfmm.sde\pfmm_dev.pfmm.spatial\pfmm_dev.pfmm.project_areas'
+dataset = r'P:\FOR\FORIST\PFM\dev10_2\dnrgdrs-prod1-pg-dc-pfmm.sde\pfmm_dev.pfmm.spatial\pfmm_dev.pfmm.project_practices'
 
 skipList = ['objectid', 'shape', 'st_area(shape)', 'st_length(shape)']
 

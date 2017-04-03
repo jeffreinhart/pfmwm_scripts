@@ -34,12 +34,8 @@ def relatedRecordGlobalIds(tableName, globalId):
     management_plans = os.path.join(db, fd, tbPref+'management_plans')
     project_practices = os.path.join(db, fd, tbPref+'project_practices')
     project_areas = os.path.join(db, fd, tbPref+'project_areas')
-    # handle if parent table is in feature dataset
-    if fd != '':
-        parentTable = os.path.join(db, fd, tbPref+tableName)
-    else:
-        parentTable = os.path.join(db, tbPref+tableName)
-    # parent immediate child dictionary as key = parent and value = immediate children as list
+    # parent immediate child dictionary as key = parent, value =
+    # either table_name or [table_name, field_name] for multiple foreign keys
     picDict = {
         'project_areas': [
             project_practices
@@ -53,18 +49,41 @@ def relatedRecordGlobalIds(tableName, globalId):
             ],
         'ownership_parcels': [
             party_cont_own_prcl
+            ],
+        'party_contacts': [
+            party_cont_own_prcl,
+            party_cont_own_blks,
+            [contact_events, 'party_contact_1_guid'],
+            [contact_events, 'party_contact_2_guid'],
+            [contact_events, 'party_contact_3_guid'],
+            [project_areas, 'party_contact_applicant_guid'],
+            [project_areas, 'party_contact_writer_guid'],
+            [project_areas, 'party_contact_entered_guid'],
+            [project_areas, 'party_contact_approver_guid'],
+            [project_areas, 'party_contact_certifier_guid']
             ]
         }
     # get list of globalids for each child table
     childTablesDict = {}
     for childTable in picDict[tableName]:
         gidList = []
-        where = tableName[:-1]+'_guid'+" = '"+globalId+"'"
-        with arcpy.da.SearchCursor(childTable, ['globalid'], where) as scur:
-            for srow in scur:
-                gidList.append(srow[0])
-        childTableName = arcpy.Describe(childTable).baseName
-        childTablesDict[childTableName] = gidList
+        if isinstance(childTable, (list)):
+            tablePath = childTable[0]
+            fieldName = childTable[1]
+            where = "{0} = '{1}'".format(fieldName, globalId)
+            with arcpy.da.SearchCursor(tablePath, ['globalid'], where) as scur:
+                for srow in scur:
+                    gidList.append(srow[0])
+            childTableName = arcpy.Describe(tablePath).baseName
+            # add to dictionary as table_name.foreign_key_field for dictionary key
+            childTablesDict["{0}.{1}".format(childTableName, fieldName)] = gidList
+        else:
+            where = "{0}_guid = '{1}'".format(tableName[:-1], globalId)
+            with arcpy.da.SearchCursor(childTable, ['globalid'], where) as scur:
+                for srow in scur:
+                    gidList.append(srow[0])
+            childTableName = arcpy.Describe(childTable).baseName
+            childTablesDict[childTableName] = gidList
     return childTablesDict
 
 def lastPcopPcGid(pcopGids):
@@ -496,3 +515,246 @@ class cls_county_coun:
                 self.recordExists = True
                 self.coun = srow[0]
                 self.cty_name = srow[1]
+
+class cls_party_cont_own_blks:
+    '''PFM Party Cont Own Blks record.'''
+    def __init__(self, globalId = '', guid = ''):
+        self.globalIdExists = False
+        self.path = os.path.join(db, tbPref+'party_cont_own_blks')
+        self.where = "globalid = '"+globalId+"'"
+        self.fieldList = [
+            'globalid',
+            'party_contact_guid',
+            'ownership_block_guid',
+            'ownership_block_contact_type'
+             ]
+        self.globalid = ''
+        self.party_contact_guid = ''
+        self.ownership_block_guid = ''
+        self.ownership_block_contact_type = ''
+        with arcpy.da.SearchCursor(self.path, self.fieldList, self.where) as scur:
+            for srow in scur:
+                self.globalIdExists = True
+                self.globalid = module_pfmm_helpers.passNull(srow[0], self.globalid)
+                self.party_contact_guid = module_pfmm_helpers.passNull(srow[1], self.party_contact_guid)
+                self.ownership_block_guid = module_pfmm_helpers.passNull(srow[2], self.ownership_block_guid)
+                self.ownership_block_contact_type = module_pfmm_helpers.passNull(srow[3], self.ownership_block_contact_type)
+
+class cls_contact_events:
+    '''PFM Contact Events record.'''
+    def __init__(self, globalId = '', guid = ''):
+        self.globalIdExists = False
+        self.path = os.path.join(db, tbPref+'contact_events')
+        self.where = "globalid = '"+globalId+"'"
+        self.fieldList = [
+            'globalid',
+            'party_contact_1_guid',
+            'party_contact_2_guid',
+            'ownership_block_guid',
+            'management_plan_guid',
+            'subject',
+            'contact_event_type',
+            'summary',
+            'notes',
+            'contact_date',
+            'party_contact_3_guid'
+             ]
+        self.globalid = ''
+        self.party_contact_1_guid = ''
+        self.party_contact_2_guid = ''
+        self.ownership_block_guid = ''
+        self.management_plan_guid = ''
+        self.subject = ''
+        self.contact_event_type = ''
+        self.summary = ''
+        self.notes = ''
+        self.contact_date = datetime.datetime(1900,1,1,0,0,0)
+        self.party_contact_3_guid = ''
+        with arcpy.da.SearchCursor(self.path, self.fieldList, self.where) as scur:
+            for srow in scur:
+                self.globalIdExists = True
+                self.globalid = module_pfmm_helpers.passNull(srow[0], self.globalid)
+                self.party_contact_1_guid = module_pfmm_helpers.passNull(srow[1], self.party_contact_1_guid)
+                self.party_contact_2_guid = module_pfmm_helpers.passNull(srow[2], self.party_contact_2_guid)
+                self.ownership_block_guid = module_pfmm_helpers.passNull(srow[3], self.ownership_block_guid)
+                self.management_plan_guid = module_pfmm_helpers.passNull(srow[4], self.management_plan_guid)
+                self.subject = module_pfmm_helpers.passNull(srow[5], self.subject)
+                self.contact_event_type = module_pfmm_helpers.passNull(srow[6], self.contact_event_type)
+                self.summary = module_pfmm_helpers.passNull(srow[7], self.summary)
+                self.notes = module_pfmm_helpers.passNull(srow[8], self.notes)
+                self.contact_date = module_pfmm_helpers.passNull(srow[9], self.contact_date)
+                self.party_contact_3_guid = module_pfmm_helpers.passNull(srow[10], self.party_contact_3_guid)
+
+class cls_project_area:
+    '''PFM Project Areas record.'''
+    def __init__(self, globalId = '', guid = ''):
+        self.globalIdExists = False
+        self.path = os.path.join(db, fd, tbPref+'project_areas')
+        self.where = "globalid = '"+globalId+"'"
+        self.fieldList = [
+            'globalid',
+            'party_contact_applicant_guid',
+            'acres_gis',
+            'assigned_date',
+            'party_contact_writer_guid',
+            'project_plan_delivered_date',
+            'anticipated_project_start_date',
+            'anticipated_project_end_date',
+            'completion_date',
+            'canceled_date',
+            'reason_for_canceling',
+            'comments',
+            'entered_date',
+            'party_contact_entered_guid',
+            'request_approved_date',
+            'party_contact_approver_guid',
+            'total_cost_share_approved',
+            'da_signed_date',
+            'po_number',
+            'po_encumbered_date',
+            'completion_deadline_date',
+            'practices_certified_date',
+            'party_contact_certifier_guid',
+            'total_cost_share_to_be_paid',
+            'reconciled_date',
+            'ownership_block_guid',
+            'pa_cultural_heritage',
+            'invoice_number',
+            'SHAPE@'
+             ]
+        self.globalid = ''
+        self.party_contact_applicant_guid = ''
+        self.acres_gis = 0
+        self.assigned_date = datetime.datetime(1900,1,1,0,0,0)
+        self.party_contact_writer_guid = ''
+        self.project_plan_delivered_date = datetime.datetime(1900,1,1,0,0,0)
+        self.anticipated_project_start_date = datetime.datetime(1900,1,1,0,0,0)
+        self.anticipated_project_end_date = datetime.datetime(1900,1,1,0,0,0)
+        self.completion_date = datetime.datetime(1900,1,1,0,0,0)
+        self.canceled_date = datetime.datetime(1900,1,1,0,0,0)
+        self.reason_for_canceling = ''
+        self.comments = ''
+        self.entered_date = datetime.datetime(1900,1,1,0,0,0)
+        self.party_contact_entered_guid = ''
+        self.request_approved_date = datetime.datetime(1900,1,1,0,0,0)
+        self.party_contact_approver_guid = ''
+        self.total_cost_share_approved = 0
+        self.da_signed_date = datetime.datetime(1900,1,1,0,0,0)
+        self.po_number = ''
+        self.po_encumbered_date = datetime.datetime(1900,1,1,0,0,0)
+        self.completion_deadline_date = datetime.datetime(1900,1,1,0,0,0)
+        self.practices_certified_date = datetime.datetime(1900,1,1,0,0,0)
+        self.party_contact_certifier_guid = ''
+        self.total_cost_share_to_be_paid = 0
+        self.reconciled_date = datetime.datetime(1900,1,1,0,0,0)
+        self.ownership_block_guid = ''
+        self.pa_cultural_heritage = ''
+        self.invoice_number = ''
+        self.shape = None
+        with arcpy.da.SearchCursor(self.path, self.fieldList, self.where) as scur:
+            for srow in scur:
+                self.globalIdExists = True
+                self.globalid = module_pfmm_helpers.passNull(srow[0], self.globalid)
+                self.party_contact_applicant_guid = module_pfmm_helpers.passNull(srow[1], self.party_contact_applicant_guid)
+                self.acres_gis = module_pfmm_helpers.passNull(srow[2], self.acres_gis)
+                self.assigned_date = module_pfmm_helpers.passNull(srow[3], self.assigned_date)
+                self.party_contact_writer_guid = module_pfmm_helpers.passNull(srow[4], self.party_contact_writer_guid)
+                self.project_plan_delivered_date = module_pfmm_helpers.passNull(srow[5], self.project_plan_delivered_date)
+                self.anticipated_project_start_date = module_pfmm_helpers.passNull(srow[6], self.anticipated_project_start_date)
+                self.anticipated_project_end_date = module_pfmm_helpers.passNull(srow[7], self.anticipated_project_end_date)
+                self.completion_date = module_pfmm_helpers.passNull(srow[8], self.completion_date)
+                self.canceled_date = module_pfmm_helpers.passNull(srow[9], self.canceled_date)
+                self.reason_for_canceling = module_pfmm_helpers.passNull(srow[10], self.reason_for_canceling)
+                self.comments = module_pfmm_helpers.passNull(srow[11], self.comments)
+                self.entered_date = module_pfmm_helpers.passNull(srow[12], self.entered_date)
+                self.party_contact_entered_guid = module_pfmm_helpers.passNull(srow[13], self.party_contact_entered_guid)
+                self.request_approved_date = module_pfmm_helpers.passNull(srow[14], self.request_approved_date)
+                self.party_contact_approver_guid = module_pfmm_helpers.passNull(srow[15], self.party_contact_approver_guid)
+                self.total_cost_share_approved = module_pfmm_helpers.passNull(srow[16], self.total_cost_share_approved)
+                self.da_signed_date = module_pfmm_helpers.passNull(srow[17], self.da_signed_date)
+                self.po_number = module_pfmm_helpers.passNull(srow[18], self.po_number)
+                self.po_encumbered_date = module_pfmm_helpers.passNull(srow[19], self.po_encumbered_date)
+                self.completion_deadline_date = module_pfmm_helpers.passNull(srow[20], self.completion_deadline_date)
+                self.practices_certified_date = module_pfmm_helpers.passNull(srow[21], self.practices_certified_date)
+                self.party_contact_certifier_guid = module_pfmm_helpers.passNull(srow[22], self.party_contact_certifier_guid)
+                self.total_cost_share_to_be_paid = module_pfmm_helpers.passNull(srow[23], self.total_cost_share_to_be_paid)
+                self.reconciled_date = module_pfmm_helpers.passNull(srow[24], self.reconciled_date)
+                self.ownership_block_guid = module_pfmm_helpers.passNull(srow[25], self.ownership_block_guid)
+                self.pa_cultural_heritage = module_pfmm_helpers.passNull(srow[26], self.pa_cultural_heritage)
+                self.invoice_number = module_pfmm_helpers.passNull(srow[27], self.invoice_number)
+                self.shape = srow[28]
+
+class cls_project_practice:
+    '''PFM Project Practices record.'''
+    def __init__(self, globalId = '', guid = ''):
+        self.globalIdExists = False
+        self.path = os.path.join(db, fd, tbPref+'project_practices')
+        self.where = "globalid = '"+globalId+"'"
+        self.fieldList = [
+            'globalid',
+            'map_label',
+            'anticipated_practice_start_date',
+            'practice',
+            'component',
+            'task',
+            'subtask',
+            'component_unit',
+            'cost_per_unit',
+            'cost_share_rate',
+            'acres_gis',
+            'proposed_component_amount',
+            'estimated_total_cost',
+            'completion_date',
+            'completed_component_amount',
+            'requesting_cost_share',
+            'cost_shares_recommended',
+            'cost_shares_earned',
+            'comments',
+            'project_area_guid',
+            'SHAPE@'
+             ]
+        self.globalid = ''
+        self.map_label = ''
+        self.anticipated_practice_start_date = datetime.datetime(1900,1,1,0,0,0)
+        self.practice = ''
+        self.component = ''
+        self.task = ''
+        self.subtask = ''
+        self.component_unit = ''
+        self.cost_per_unit = 0
+        self.cost_share_rate = 0
+        self.acres_gis = 0
+        self.proposed_component_amount = 0
+        self.estimated_total_cost = 0
+        self.completion_date = datetime.datetime(1900,1,1,0,0,0)
+        self.completed_component_amount = 0
+        self.requesting_cost_share = ''
+        self.cost_shares_recommended = 0
+        self.cost_shares_earned = 0
+        self.comments = ''
+        self.project_area_guid = ''
+        self.shape = None
+        with arcpy.da.SearchCursor(self.path, self.fieldList, self.where) as scur:
+            for srow in scur:
+                self.globalIdExists = True
+                self.globalid = module_pfmm_helpers.passNull(srow[0], self.globalid)
+                self.map_label = module_pfmm_helpers.passNull(srow[1], self.map_label)
+                self.anticipated_practice_start_date = module_pfmm_helpers.passNull(srow[2], self.anticipated_practice_start_date)
+                self.practice = module_pfmm_helpers.passNull(srow[3], self.practice)
+                self.component = module_pfmm_helpers.passNull(srow[4], self.component)
+                self.task = module_pfmm_helpers.passNull(srow[5], self.task)
+                self.subtask = module_pfmm_helpers.passNull(srow[6], self.subtask)
+                self.component_unit = module_pfmm_helpers.passNull(srow[7], self.component_unit)
+                self.cost_per_unit = module_pfmm_helpers.passNull(srow[8], self.cost_per_unit)
+                self.cost_share_rate = module_pfmm_helpers.passNull(srow[9], self.cost_share_rate)
+                self.acres_gis = module_pfmm_helpers.passNull(srow[10], self.acres_gis)
+                self.proposed_component_amount = module_pfmm_helpers.passNull(srow[11], self.proposed_component_amount)
+                self.estimated_total_cost = module_pfmm_helpers.passNull(srow[12], self.estimated_total_cost)
+                self.completion_date = module_pfmm_helpers.passNull(srow[13], self.completion_date)
+                self.completed_component_amount = module_pfmm_helpers.passNull(srow[14], self.completed_component_amount)
+                self.requesting_cost_share = module_pfmm_helpers.passNull(srow[15], self.requesting_cost_share)
+                self.cost_shares_recommended = module_pfmm_helpers.passNull(srow[16], self.cost_shares_recommended)
+                self.cost_shares_earned = module_pfmm_helpers.passNull(srow[17], self.cost_shares_earned)
+                self.comments = module_pfmm_helpers.passNull(srow[18], self.comments)
+                self.project_area_guid = module_pfmm_helpers.passNull(srow[19], self.project_area_guid)
+                self.shape = srow[20]

@@ -10,6 +10,7 @@
 #-------------------------------------------------------------------------------
 
 import arcpy, os, sys, datetime, module_pfmm_get
+from calendar import isleap
 
 def passNull(fieldValue, propertyValue):
     if fieldValue != None:
@@ -23,3 +24,14 @@ def dateToMDYYYY(dateIn):
     else:
         dateStr = "{dt.month}/{dt.day}/{dt.year}".format(dt = dateIn)
     return dateStr
+
+def addYears(d, years):
+    # copied from stack overflow
+    new_year = d.year + years
+    try:
+        return d.replace(year=new_year)
+    except ValueError:
+        if (d.month == 2 and d.day == 29 and # leap day
+            isleap(d.year) and not isleap(new_year)):
+            return d.replace(year=new_year, day=28)
+        raise
